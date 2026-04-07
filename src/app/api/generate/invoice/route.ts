@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAuth, ensureUser } from "@/lib/auth";
 import { invoiceInputSchema } from "@/lib/validations/invoice";
 import { generateInvoice } from "@/lib/claude";
+import { checkUsage } from "@/lib/usage";
 import { currentUser } from "@clerk/nextjs/server";
 
 // POST /api/generate/invoice — generate an AI invoice
@@ -11,6 +12,18 @@ export async function POST(request: Request) {
     const userId = await requireAuth();
     await ensureUser(userId);
     const supabase = createAdminClient();
+
+    // Check plan usage limits
+    const usage = await checkUsage(userId, "invoice");
+    if (!usage.allowed) {
+      return NextResponse.json(
+        {
+          error: `Monthly invoice limit reached (${usage.used}/${usage.limit}). Upgrade your plan for unlimited invoices.`,
+          upgrade: true,
+        },
+        { status: 403 }
+      );
+    }
 
     const body = await request.json();
     const parsed = invoiceInputSchema.safeParse(body);

@@ -2,9 +2,16 @@ import Anthropic from "@anthropic-ai/sdk";
 import { invoiceOutputSchema, type InvoiceOutput } from "@/lib/validations/invoice";
 import type { Client } from "@/types";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+let _anthropic: Anthropic | null = null;
+
+function getAnthropic(): Anthropic {
+  if (!_anthropic) {
+    _anthropic = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+    });
+  }
+  return _anthropic;
+}
 
 // ─── Invoice Generation ────────────────────────────────────────────
 
@@ -40,7 +47,7 @@ interface GenerateInvoiceParams {
 export async function generateInvoice(
   params: GenerateInvoiceParams
 ): Promise<InvoiceOutput> {
-  const response = await anthropic.messages.create({
+  const response = await getAnthropic().messages.create({
     model: "claude-sonnet-4-20250514",
     max_tokens: 2000,
     messages: [
@@ -105,7 +112,7 @@ export async function generateContract(
       ? `${params.currency} ${params.rate}/hour`
       : `${params.currency} ${params.rate} fixed price`;
 
-  const response = await anthropic.messages.create({
+  const response = await getAnthropic().messages.create({
     model: "claude-sonnet-4-20250514",
     max_tokens: 4000,
     messages: [
@@ -148,4 +155,4 @@ Output the contract in clean markdown format. Use proper headings (##), numbered
   return text;
 }
 
-export { anthropic };
+export { getAnthropic };

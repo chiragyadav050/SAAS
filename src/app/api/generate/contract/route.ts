@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAuth, ensureUser } from "@/lib/auth";
 import { contractInputSchema } from "@/lib/validations/contract";
 import { generateContract } from "@/lib/claude";
+import { checkUsage } from "@/lib/usage";
 import { currentUser } from "@clerk/nextjs/server";
 
 // POST /api/generate/contract — generate an AI contract
@@ -11,6 +12,18 @@ export async function POST(request: Request) {
     const userId = await requireAuth();
     await ensureUser(userId);
     const supabase = createAdminClient();
+
+    // Check plan usage limits
+    const usage = await checkUsage(userId, "contract");
+    if (!usage.allowed) {
+      return NextResponse.json(
+        {
+          error: `Monthly contract limit reached (${usage.used}/${usage.limit}). Upgrade your plan for unlimited contracts.`,
+          upgrade: true,
+        },
+        { status: 403 }
+      );
+    }
 
     const body = await request.json();
     const parsed = contractInputSchema.safeParse(body);

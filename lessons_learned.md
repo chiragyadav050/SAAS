@@ -64,3 +64,10 @@ Each entry includes the root cause and a prevention rule to avoid repeating it.
 - **Root Cause:** `renderToBuffer` expects the top-level `<Document>` element directly. Wrapping the PDF component via `React.createElement(InvoicePdf, props)` returns a component element, not the `Document` element, causing a type mismatch.
 - **Fix:** Used `as any` cast on the element passed to `renderToBuffer`. At runtime the component returns a `<Document>` which works correctly.
 - **Prevention Rule:** When using `@react-pdf/renderer`'s `renderToBuffer` with wrapper components, expect a type mismatch — use `as any` or restructure to return Document directly
+
+### [Phase 7] — Module-scope SDK initialization crashes build
+- **Date:** 2026-04-07
+- **Symptom:** Build failed with `Neither apiKey nor config.authenticator provided` during static page collection
+- **Root Cause:** `new Stripe(process.env.STRIPE_SECRET_KEY!)` at module scope runs during build when env vars are undefined. Same risk applies to Anthropic and Resend clients.
+- **Fix:** Converted all SDK clients (Stripe, Anthropic, Resend) to lazy-initialized singletons via getter functions (`getStripe()`, `getAnthropic()`, `getResend()`)
+- **Prevention Rule:** NEVER initialize SDK clients at module scope with env vars. Always use lazy initialization via a getter function to defer until runtime.
