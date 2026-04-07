@@ -1,5 +1,5 @@
-import { UserButton } from "@clerk/nextjs";
-import Link from "next/link";
+import { Sidebar } from "@/components/layout/sidebar";
+import { Header } from "@/components/layout/header";
 
 export default function DashboardLayout({
   children,
@@ -7,44 +7,14 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="border-b bg-white">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/dashboard" className="text-xl font-bold">
-            Clause
-          </Link>
-          <nav className="flex items-center gap-6">
-            <Link
-              href="/dashboard"
-              className="text-sm font-medium text-gray-700 hover:text-gray-900"
-            >
-              Dashboard
-            </Link>
-            <Link
-              href="/clients"
-              className="text-sm font-medium text-gray-700 hover:text-gray-900"
-            >
-              Clients
-            </Link>
-            <Link
-              href="/documents"
-              className="text-sm font-medium text-gray-700 hover:text-gray-900"
-            >
-              Documents
-            </Link>
-            <Link
-              href="/settings"
-              className="text-sm font-medium text-gray-700 hover:text-gray-900"
-            >
-              Settings
-            </Link>
-            <UserButton />
-          </nav>
-        </div>
-      </header>
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {children}
-      </main>
+    <div className="flex min-h-screen bg-gray-50">
+      <Sidebar />
+      <div className="flex flex-1 flex-col">
+        <Header />
+        <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
