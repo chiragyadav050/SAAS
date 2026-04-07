@@ -6,6 +6,8 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+// ─── Invoice Generation ────────────────────────────────────────────
+
 const INVOICE_SCHEMA_DESCRIPTION = `{
   "invoice_number": "string (e.g. INV-2026-001)",
   "issue_date": "string (YYYY-MM-DD)",
@@ -73,13 +75,77 @@ Rules:
 
   const text =
     response.content[0].type === "text" ? response.content[0].text : "";
-
-  // Strip any markdown fencing if the model includes it despite instructions
   const cleaned = text.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "");
-
   const parsed = JSON.parse(cleaned);
-  const validated = invoiceOutputSchema.parse(parsed);
-  return validated;
+  return invoiceOutputSchema.parse(parsed);
+}
+
+// ─── Contract Generation ───────────────────────────────────────────
+
+interface GenerateContractParams {
+  userName: string;
+  userEmail: string;
+  client: Client;
+  projectDescription: string;
+  rate: number;
+  rateType: "hourly" | "fixed";
+  currency: string;
+  startDate: string;
+  endDate?: string;
+  jurisdiction: string;
+  revisions: number;
+  notes?: string;
+}
+
+export async function generateContract(
+  params: GenerateContractParams
+): Promise<string> {
+  const rateDescription =
+    params.rateType === "hourly"
+      ? `${params.currency} ${params.rate}/hour`
+      : `${params.currency} ${params.rate} fixed price`;
+
+  const response = await anthropic.messages.create({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 4000,
+    messages: [
+      {
+        role: "user",
+        content: `Draft a professional freelance contract with these details:
+
+Freelancer: ${params.userName} (${params.userEmail})
+Client: ${params.client.name} (${params.client.email})${params.client.company ? `, Company: ${params.client.company}` : ""}${params.client.address ? `, Address: ${params.client.address}` : ""}
+
+Project: ${params.projectDescription}
+Compensation: ${rateDescription}
+Start Date: ${params.startDate}
+${params.endDate ? `End Date: ${params.endDate}` : "No fixed end date"}
+Jurisdiction: ${params.jurisdiction}
+Revisions Included: ${params.revisions}
+${params.notes ? `Additional Terms: ${params.notes}` : ""}
+
+Requirements:
+- Include all standard freelance contract sections
+- Scope of Work (based on the project description)
+- Payment Terms (including late fees)
+- Intellectual Property ownership (IP transfers to client upon full payment)
+- Revision Policy (${params.revisions} revisions included, additional at the agreed rate)
+- Confidentiality clause
+- Termination clause (with notice period)
+- Limitation of Liability
+- Governing Law and Jurisdiction (${params.jurisdiction})
+- Signature blocks for both parties
+
+Output the contract in clean markdown format. Use proper headings (##), numbered lists where appropriate, and bold for key terms. Make it professional and legally sound.`,
+      },
+    ],
+    system:
+      "You are a legal professional drafting freelance contracts. Output a complete, professional contract in clean markdown. Include all standard legal sections. Tailor the contract to the specific jurisdiction provided. Be thorough but clear.",
+  });
+
+  const text =
+    response.content[0].type === "text" ? response.content[0].text : "";
+  return text;
 }
 
 export { anthropic };
