@@ -43,3 +43,17 @@ Each entry includes the root cause and a prevention rule to avoid repeating it.
 - **Root Cause:** `@supabase/supabase-js` v2.102 `GenericTable` type requires a `Relationships` array field on each table definition. Our `Database` type omitted it, causing the entire table type to fail the `extends GenericSchema` check.
 - **Fix:** Added `Relationships: []` or `Relationships: [{...}]` to every table in `src/types/database.ts`
 - **Prevention Rule:** When writing Database types for Supabase JS v2.100+, always include `Relationships` array on every table type
+
+### [Phase 4] — Supabase JSONB insert type mismatch
+- **Date:** 2026-04-07
+- **Symptom:** Build failed — `Record<string, unknown>` not assignable to `Json | undefined` for `content_json` column
+- **Root Cause:** Casting a Zod-parsed object via `as unknown as Record<string, unknown>` doesn't satisfy Supabase's `Json` type. The `Json` type is a union of primitives/arrays/objects, not `Record<string, unknown>`.
+- **Fix:** Used `JSON.parse(JSON.stringify(invoiceData))` to produce a plain JSON-compatible value that TypeScript infers as `any`, satisfying the `Json` type
+- **Prevention Rule:** For Supabase JSONB columns, serialize complex objects via `JSON.parse(JSON.stringify(obj))` instead of type assertions
+
+### [Phase 4] — ESLint: no-html-link-for-pages in client component
+- **Date:** 2026-04-07
+- **Symptom:** Build failed — ESLint error for using `<a>` instead of `<Link>` from next/link
+- **Root Cause:** Used a plain `<a>` tag for an internal route in a client component
+- **Fix:** Replaced with `<Link>` from `next/link`
+- **Prevention Rule:** Always use `<Link>` from `next/link` for internal navigation, even in client components
