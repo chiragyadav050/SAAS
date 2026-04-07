@@ -40,6 +40,7 @@ export interface Database {
           stripe_customer_id?: string | null;
           updated_at?: string;
         };
+        Relationships: [];
       };
       documents: {
         Row: {
@@ -81,6 +82,22 @@ export interface Database {
           client_id?: string | null;
           updated_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "documents_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "documents_client_id_fkey";
+            columns: ["client_id"];
+            isOneToOne: false;
+            referencedRelation: "clients";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       clients: {
         Row: {
@@ -113,6 +130,15 @@ export interface Database {
           phone?: string | null;
           updated_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "clients_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       templates: {
         Row: {
@@ -142,6 +168,15 @@ export interface Database {
           is_default?: boolean;
           updated_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "templates_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       sends: {
         Row: {
@@ -164,6 +199,15 @@ export interface Database {
           opened_at?: string | null;
           paid_at?: string | null;
         };
+        Relationships: [
+          {
+            foreignKeyName: "sends_document_id_fkey";
+            columns: ["document_id"];
+            isOneToOne: false;
+            referencedRelation: "documents";
+            referencedColumns: ["id"];
+          },
+        ];
       };
     };
     Views: Record<string, never>;

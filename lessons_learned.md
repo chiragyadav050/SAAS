@@ -36,3 +36,10 @@ Each entry includes the root cause and a prevention rule to avoid repeating it.
 - **Root Cause:** Clerk v7 dropped Next.js 14 support
 - **Fix:** Upgraded to Next.js 15 + React 19, updated `next.config.mjs` (`serverExternalPackages` replaces `experimental.serverComponentsExternalPackages`), made Supabase server client `async` (cookies() is now async in Next.js 15)
 - **Prevention Rule:** Check peer dependency requirements before installing packages; Next.js 15 makes `cookies()` and `headers()` async
+
+### [Phase 3] — Supabase v2.102 Database type requires Relationships field
+- **Date:** 2026-04-07
+- **Symptom:** Build failed — all Supabase `.insert()`, `.update()`, `.select()` resolved to `never` type
+- **Root Cause:** `@supabase/supabase-js` v2.102 `GenericTable` type requires a `Relationships` array field on each table definition. Our `Database` type omitted it, causing the entire table type to fail the `extends GenericSchema` check.
+- **Fix:** Added `Relationships: []` or `Relationships: [{...}]` to every table in `src/types/database.ts`
+- **Prevention Rule:** When writing Database types for Supabase JS v2.100+, always include `Relationships` array on every table type
