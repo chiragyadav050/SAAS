@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { InvoiceOutput } from "@/lib/validations/invoice";
 import Link from "next/link";
 
@@ -22,11 +23,49 @@ function formatCurrency(amount: number, currency: string): string {
 }
 
 export function InvoicePreview({ invoice, documentId }: InvoicePreviewProps) {
+  const [exporting, setExporting] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+
+  async function handleExportPdf() {
+    setExporting(true);
+    try {
+      const res = await fetch("/api/export/pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ document_id: documentId }),
+      });
+      const data = await res.json();
+      if (res.ok && data.pdf_url) {
+        setPdfUrl(data.pdf_url);
+      }
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-900">Invoice Preview</h2>
         <div className="flex gap-2">
+          {pdfUrl ? (
+            <a
+              href={pdfUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700"
+            >
+              Download PDF
+            </a>
+          ) : (
+            <button
+              onClick={handleExportPdf}
+              disabled={exporting}
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+            >
+              {exporting ? "Generating PDF..." : "Export PDF"}
+            </button>
+          )}
           <Link
             href="/documents"
             className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50"
@@ -34,7 +73,7 @@ export function InvoicePreview({ invoice, documentId }: InvoicePreviewProps) {
             View All Documents
           </Link>
           <Link
-            href={`/new-invoice`}
+            href="/new-invoice"
             onClick={() => window.location.reload()}
             className="rounded-lg bg-black px-3 py-2 text-sm font-medium text-white hover:bg-gray-800"
           >

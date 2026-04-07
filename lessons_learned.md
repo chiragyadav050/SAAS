@@ -57,3 +57,10 @@ Each entry includes the root cause and a prevention rule to avoid repeating it.
 - **Root Cause:** Used a plain `<a>` tag for an internal route in a client component
 - **Fix:** Replaced with `<Link>` from `next/link`
 - **Prevention Rule:** Always use `<Link>` from `next/link` for internal navigation, even in client components
+
+### [Phase 6] — @react-pdf/renderer renderToBuffer type mismatch
+- **Date:** 2026-04-07
+- **Symptom:** Build failed — `FunctionComponentElement<InvoicePdfProps>` not assignable to `ReactElement<DocumentProps>`
+- **Root Cause:** `renderToBuffer` expects the top-level `<Document>` element directly. Wrapping the PDF component via `React.createElement(InvoicePdf, props)` returns a component element, not the `Document` element, causing a type mismatch.
+- **Fix:** Used `as any` cast on the element passed to `renderToBuffer`. At runtime the component returns a `<Document>` which works correctly.
+- **Prevention Rule:** When using `@react-pdf/renderer`'s `renderToBuffer` with wrapper components, expect a type mismatch — use `as any` or restructure to return Document directly
