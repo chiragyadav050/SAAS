@@ -22,3 +22,17 @@ Each entry includes the root cause and a prevention rule to avoid repeating it.
 - **Root Cause:** Used an outdated API version string instead of checking the SDK's default
 - **Fix:** Checked SDK default via `new Stripe('fake')._api.version` → updated to `2026-03-25.dahlia`
 - **Prevention Rule:** Always verify Stripe API version against the installed SDK before hardcoding
+
+### [Phase 2] — Clerk v7 UserButton prop API change
+- **Date:** 2026-04-07
+- **Symptom:** Build failed — `afterSignOutUrl` prop does not exist on `UserButton`
+- **Root Cause:** Clerk v7 moved `afterSignOutUrl` from component props to `ClerkProvider` props
+- **Fix:** Removed prop from `UserButton`, added `afterSignOutUrl`, `signInUrl`, `signUpUrl` to `ClerkProvider`
+- **Prevention Rule:** For Clerk v7+, configure redirect URLs on `ClerkProvider`, not individual components
+
+### [Phase 2] — Next.js 15 upgrade required for Clerk
+- **Date:** 2026-04-07
+- **Symptom:** `npm install @clerk/nextjs` failed with peer dependency conflict (required Next.js 15+)
+- **Root Cause:** Clerk v7 dropped Next.js 14 support
+- **Fix:** Upgraded to Next.js 15 + React 19, updated `next.config.mjs` (`serverExternalPackages` replaces `experimental.serverComponentsExternalPackages`), made Supabase server client `async` (cookies() is now async in Next.js 15)
+- **Prevention Rule:** Check peer dependency requirements before installing packages; Next.js 15 makes `cookies()` and `headers()` async
