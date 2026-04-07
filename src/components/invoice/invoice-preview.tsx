@@ -25,6 +25,8 @@ function formatCurrency(amount: number, currency: string): string {
 export function InvoicePreview({ invoice, documentId }: InvoicePreviewProps) {
   const [exporting, setExporting] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
 
   async function handleExportPdf() {
     setExporting(true);
@@ -43,11 +45,40 @@ export function InvoicePreview({ invoice, documentId }: InvoicePreviewProps) {
     }
   }
 
+  async function handleSend() {
+    setSending(true);
+    try {
+      const res = await fetch("/api/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ document_id: documentId }),
+      });
+      if (res.ok) {
+        setSent(true);
+      }
+    } finally {
+      setSending(false);
+    }
+  }
+
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-900">Invoice Preview</h2>
         <div className="flex gap-2">
+          {sent ? (
+            <span className="rounded-lg bg-green-100 px-3 py-2 text-sm font-medium text-green-700">
+              Sent!
+            </span>
+          ) : (
+            <button
+              onClick={handleSend}
+              disabled={sending}
+              className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            >
+              {sending ? "Sending..." : "Send to Client"}
+            </button>
+          )}
           {pdfUrl ? (
             <a
               href={pdfUrl}
