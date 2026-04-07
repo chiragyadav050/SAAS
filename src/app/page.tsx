@@ -219,7 +219,7 @@ export default function LandingPage() {
       <footer className="border-t border-gray-100 py-12">
         <div className="mx-auto max-w-6xl px-4 text-center">
           <p className="text-sm text-gray-500">
-            Built on Anthropic Claude API. Designed for freelancers.
+            Built on OpenAI API. Designed for freelancers.
           </p>
           <p className="mt-2 text-xs text-gray-400">
             &copy; {new Date().getFullYear()} Clause. All rights reserved.

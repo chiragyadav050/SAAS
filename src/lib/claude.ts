@@ -1,16 +1,16 @@
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 import { invoiceOutputSchema, type InvoiceOutput } from "@/lib/validations/invoice";
 import type { Client } from "@/types";
 
-let _anthropic: Anthropic | null = null;
+let _openai: OpenAI | null = null;
 
-function getAnthropic(): Anthropic {
-  if (!_anthropic) {
-    _anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
+function getOpenAI(): OpenAI {
+  if (!_openai) {
+    _openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
     });
   }
-  return _anthropic;
+  return _openai;
 }
 
 // ─── Invoice Generation ────────────────────────────────────────────
@@ -47,10 +47,15 @@ interface GenerateInvoiceParams {
 export async function generateInvoice(
   params: GenerateInvoiceParams
 ): Promise<InvoiceOutput> {
-  const response = await getAnthropic().messages.create({
-    model: "claude-sonnet-4-20250514",
+  const response = await getOpenAI().chat.completions.create({
+    model: "gpt-4o",
     max_tokens: 2000,
     messages: [
+      {
+        role: "system",
+        content:
+          "You are a professional accountant generating invoices. Output valid JSON matching the provided schema. Always include: payment terms, late fee clause, professional language. Return ONLY raw JSON, no markdown code fences.",
+      },
       {
         role: "user",
         content: `Generate a professional invoice in JSON format.
@@ -76,12 +81,9 @@ Rules:
 - Return ONLY the JSON object, no markdown fencing or extra text`,
       },
     ],
-    system:
-      "You are a professional accountant generating invoices. Output valid JSON matching the provided schema. Always include: payment terms, late fee clause, professional language. Return ONLY raw JSON, no markdown code fences.",
   });
 
-  const text =
-    response.content[0].type === "text" ? response.content[0].text : "";
+  const text = response.choices[0]?.message?.content ?? "";
   const cleaned = text.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "");
   const parsed = JSON.parse(cleaned);
   return invoiceOutputSchema.parse(parsed);
@@ -112,10 +114,15 @@ export async function generateContract(
       ? `${params.currency} ${params.rate}/hour`
       : `${params.currency} ${params.rate} fixed price`;
 
-  const response = await getAnthropic().messages.create({
-    model: "claude-sonnet-4-20250514",
+  const response = await getOpenAI().chat.completions.create({
+    model: "gpt-4o",
     max_tokens: 4000,
     messages: [
+      {
+        role: "system",
+        content:
+          "You are a legal professional drafting freelance contracts. Output a complete, professional contract in clean markdown. Include all standard legal sections. Tailor the contract to the specific jurisdiction provided. Be thorough but clear.",
+      },
       {
         role: "user",
         content: `Draft a professional freelance contract with these details:
@@ -146,13 +153,9 @@ Requirements:
 Output the contract in clean markdown format. Use proper headings (##), numbered lists where appropriate, and bold for key terms. Make it professional and legally sound.`,
       },
     ],
-    system:
-      "You are a legal professional drafting freelance contracts. Output a complete, professional contract in clean markdown. Include all standard legal sections. Tailor the contract to the specific jurisdiction provided. Be thorough but clear.",
   });
 
-  const text =
-    response.content[0].type === "text" ? response.content[0].text : "";
-  return text;
+  return response.choices[0]?.message?.content ?? "";
 }
 
-export { getAnthropic };
+export { getOpenAI };
